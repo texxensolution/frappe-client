@@ -6,7 +6,7 @@ with open('requirements.txt') as requirements:
     install_requires = requirements.read().split()
 
 setup(
-    name='frappeclient',
+    name='frappeclient2',
     version=version,
     author='Rushabh Mehta',
     author_email='rushabh@erpnext.com',
