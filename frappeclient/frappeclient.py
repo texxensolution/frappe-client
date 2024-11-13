@@ -86,7 +86,7 @@ class FrappeClient(object):
 			params['order_by'] = order_by
 
 		res = self.session.get(self.url + "/api/resource/" + doctype, params=params,
-			verify=self.verify, headers=self.headers)
+			 headers=self.headers)
 		return self.post_process(res)
 
 	def insert(self, doc):
