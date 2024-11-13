@@ -31,9 +31,10 @@ class NotUploadableException(FrappeException):
 class FrappeClient(object):
 	def __init__(self, url=None, username=None, password=None, api_key=None, api_secret=None, verify=True):
 		self.headers = dict(Accept='application/json')
-		self.session = requests.Session(verify=verify)
+		self.session = requests.Session()
 		self.can_download = []
 		self.url = url
+		self.verify = verify
 
 		if username and password:
 			self.login(username, password)
@@ -52,7 +53,7 @@ class FrappeClient(object):
 			'cmd': 'login',
 			'usr': username,
 			'pwd': password
-		}, headers=self.headers)
+		}, verify=self.verify, headers=self.headers)
 
 		if r.json().get('message') == "Logged In":
 			self.can_download = []
@@ -68,7 +69,7 @@ class FrappeClient(object):
 	def logout(self):
 		self.session.get(self.url, params={
 			'cmd': 'logout',
-		})
+		}, verify=self.verify)
 
 	def get_list(self, doctype, fields=["*"], filters=None, limit_start=0, limit_page_length=0, order_by=None):
 		'''Returns list of records of a particular type'''
@@ -86,7 +87,7 @@ class FrappeClient(object):
 			params['order_by'] = order_by
 
 		res = self.session.get(self.url + "/api/resource/" + doctype, params=params,
-			 headers=self.headers)
+			 headers=self.headers, verify=self.verify)
 		return self.post_process(res)
 
 	def insert(self, doc):
@@ -94,7 +95,7 @@ class FrappeClient(object):
 
 		:param doc: A dict or Document object to be inserted remotely'''
 		res = self.session.post(self.url + "/api/resource/" + quote(doc.get("doctype")),
-			data={"data":json.dumps(doc)})
+			data={"data":json.dumps(doc)}, verify=self.verify)
 		return self.post_process(res)
 
 	def insert_many(self, docs):
@@ -111,7 +112,7 @@ class FrappeClient(object):
 
 		:param doc: dict or Document object to be updated remotely. `name` is mandatory for this'''
 		url = self.url + "/api/resource/" + quote(doc.get("doctype")) + "/" + quote(doc.get("name"))
-		res = self.session.put(url, data={"data":json.dumps(doc)})
+		res = self.session.put(url, data={"data":json.dumps(doc)}, verify=self.verify)
 		return self.post_process(res)
 
 	def bulk_update(self, docs):
@@ -181,7 +182,7 @@ class FrappeClient(object):
 			params["fields"] = json.dumps(fields)
 
 		res = self.session.get(self.url + '/api/resource/' + doctype + '/' + name,
-							   params=params)
+							   params=params, verify=self.verify)
 
 		return self.post_process(res)
 
@@ -208,7 +209,7 @@ class FrappeClient(object):
 		}
 		response = self.session.get(
 			self.url + '/api/method/frappe.templates.pages.print.download_pdf',
-			params=params, stream=True)
+			params=params, stream=True, verify=self.verify)
 
 		return self.post_process_file_stream(response)
 
@@ -220,7 +221,7 @@ class FrappeClient(object):
 			'no_letterhead': int(not bool(letterhead))
 		}
 		response = self.session.get(
-			self.url + '/print', params=params, stream=True
+			self.url + '/print', params=params, stream=True, verify=self.verify
 		)
 		return self.post_process_file_stream(response)
 
@@ -243,25 +244,25 @@ class FrappeClient(object):
 
 		request = self.session.get(
 			self.url + '/api/method/frappe.core.page.data_import_tool.exporter.get_template',
-			params=params
+			params=params, verify=self.verify
 		)
 		return self.post_process_file_stream(request)
 
 	def get_api(self, method, params=None):
-		res = self.session.get(self.url + '/api/method/' + method + '/', params=params)
+		res = self.session.get(self.url + '/api/method/' + method + '/', params=params, verify=self.verify)
 		return self.post_process(res)
 
 	def post_api(self, method, params=None):
-		res = self.session.post(self.url + '/api/method/' + method + '/', params=params)
+		res = self.session.post(self.url + '/api/method/' + method + '/', params=params, verify=self.verify)
 		return self.post_process(res)
 
 	def get_request(self, params):
-		res = self.session.get(self.url, params=self.preprocess(params))
+		res = self.session.get(self.url, params=self.preprocess(params), verify=self.verify)
 		res = self.post_process(res)
 		return res
 
 	def post_request(self, data):
-		res = self.session.post(self.url, data=self.preprocess(data))
+		res = self.session.post(self.url, data=self.preprocess(data), verify=self.verify)
 		res = self.post_process(res)
 		return res
 
